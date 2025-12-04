@@ -1,10 +1,49 @@
 import { Request, Response } from 'express';
 import * as repo from '../../dal/productRepo';
 import { ProductCreateInput, ProductUpdateInput } from '../../types/product';
+import { ProductQueryFilters } from '../../types/filters';
 
-export async function getProducts(_req: Request, res: Response) {
+function parseNumber(value: unknown): number | undefined {
+  if (typeof value === 'string') {
+    const num = Number(value);
+    return Number.isNaN(num) ? undefined : num;
+  }
+  return undefined;
+}
+
+export async function getProducts(req: Request, res: Response) {
   try {
-    const products = await repo.getAllProducts();
+    const q = req.query;
+
+    const filters: ProductQueryFilters = {
+      name: q.name as string | undefined,
+      type: q.type as any,
+      consumptionProtocol: q.consumptionProtocol as any,
+
+      minZoom: parseNumber(q.minZoom),
+      minZoomGreater: parseNumber(q.minZoomGreater),
+      minZoomGreaterEqual: parseNumber(q.minZoomGreaterEqual),
+      minZoomLess: parseNumber(q.minZoomLess),
+      minZoomLessEqual: parseNumber(q.minZoomLessEqual),
+
+      maxZoom: parseNumber(q.maxZoom),
+      maxZoomGreater: parseNumber(q.maxZoomGreater),
+      maxZoomGreaterEqual: parseNumber(q.maxZoomGreaterEqual),
+      maxZoomLess: parseNumber(q.maxZoomLess),
+      maxZoomLessEqual: parseNumber(q.maxZoomLessEqual),
+
+      resolutionBest: parseNumber(q.resolutionBest),
+      resolutionBestGreater: parseNumber(q.resolutionBestGreater),
+      resolutionBestGreaterEqual: parseNumber(q.resolutionBestGreaterEqual),
+      resolutionBestLess: parseNumber(q.resolutionBestLess),
+      resolutionBestLessEqual: parseNumber(q.resolutionBestLessEqual),
+
+      boundingPolygonContains: q.boundingPolygonContains as string | undefined,
+      boundingPolygonWithin: q.boundingPolygonWithin as string | undefined,
+      boundingPolygonIntersects: q.boundingPolygonIntersects as string | undefined,
+    };
+
+    const products = await repo.queryProducts(filters);
     res.json(products);
   } catch (err) {
     console.error('getProducts error:', err);
