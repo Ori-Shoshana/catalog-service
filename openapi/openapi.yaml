@@ -1,0 +1,251 @@
+openapi: 3.0.3
+info:
+  title: Geospatial Products Catalog
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:3000
+
+paths:
+  /products:
+    get:
+      summary: List products
+      parameters:
+        # equal (strings / enums / numbers)
+        - in: query
+          name: name
+          schema:
+            type: string
+        - in: query
+          name: type
+          schema:
+            $ref: '#/components/schemas/ProductType'
+        - in: query
+          name: consumptionProtocol
+          schema:
+            $ref: '#/components/schemas/ConsumptionProtocol'
+        - in: query
+          name: minZoom
+          schema:
+            type: integer
+        - in: query
+          name: maxZoom
+          schema:
+            type: integer
+        - in: query
+          name: resolutionBest
+          schema:
+            type: number
+            format: double
+
+        # greater / greaterEqual / less / lessEqual (numbers)
+        - in: query
+          name: minZoomGreater
+          schema:
+            type: integer
+        - in: query
+          name: minZoomGreaterEqual
+          schema:
+            type: integer
+        - in: query
+          name: minZoomLess
+          schema:
+            type: integer
+        - in: query
+          name: minZoomLessEqual
+          schema:
+            type: integer
+
+        - in: query
+          name: maxZoomGreater
+          schema:
+            type: integer
+        - in: query
+          name: maxZoomGreaterEqual
+          schema:
+            type: integer
+        - in: query
+          name: maxZoomLess
+          schema:
+            type: integer
+        - in: query
+          name: maxZoomLessEqual
+          schema:
+            type: integer
+
+        - in: query
+          name: resolutionBestGreater
+          schema:
+            type: number
+            format: double
+        - in: query
+          name: resolutionBestGreaterEqual
+          schema:
+            type: number
+            format: double
+        - in: query
+          name: resolutionBestLess
+          schema:
+            type: number
+            format: double
+        - in: query
+          name: resolutionBestLessEqual
+          schema:
+            type: number
+            format: double
+
+        # geo filters: contains / within / intersects (פשוט כ־string)
+        - in: query
+          name: boundingPolygonContains
+          schema:
+            type: string
+        - in: query
+          name: boundingPolygonWithin
+          schema:
+            type: string
+        - in: query
+          name: boundingPolygonIntersects
+          schema:
+            type: string
+
+      responses:
+        '200':
+          description: List of products
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Product'
+
+    post:
+      summary: Create product
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductInput'
+      responses:
+        '201':
+          description: Product created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+
+  /products/{id}:
+    get:
+      summary: Get product by id
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Product
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+        '404':
+          description: Not found
+
+    put:
+      summary: Update product by id
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductInput'
+      responses:
+        '200':
+          description: Product updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+        '404':
+          description: Not found
+
+    delete:
+      summary: Delete product by id
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '204':
+          description: Product deleted
+        '404':
+          description: Not found
+
+components:
+  schemas:
+    ProductType:
+      type: string
+      enum:
+        - raster
+        - rasterized vector
+        - 3d tiles
+        - QMesh
+
+    ConsumptionProtocol:
+      type: string
+      enum:
+        - WMS
+        - WMTS
+        - XYZ
+        - 3D Tiles
+
+    ProductInput:
+      type: object
+      required:
+        - name
+        - boundingPolygon
+        - type
+        - consumptionProtocol
+      properties:
+        name:
+          type: string
+          maxLength: 48
+        description:
+          type: string
+        boundingPolygon:
+          type: string      # למשל GeoJSON או WKT, לא משנה לספק
+        consumptionLink:
+          type: string
+        type:
+          $ref: '#/components/schemas/ProductType'
+        consumptionProtocol:
+          $ref: '#/components/schemas/ConsumptionProtocol'
+        resolutionBest:
+          type: number
+          format: double
+        minZoom:
+          type: integer
+        maxZoom:
+          type: integer
+
+    Product:
+      allOf:
+        - $ref: '#/components/schemas/ProductInput'
+        - type: object
+          properties:
+            id:
+              type: integer
+              format: int64
