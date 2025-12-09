@@ -3,10 +3,10 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "ts-node-dev src/api/server.ts",
     "build": "tsc",
-    "start": "node dist/api/server.js"
+    "start": "node dist/api/server.js",
+    "test": "jest"
   },
   "keywords": [],
   "author": "",
@@ -17,7 +17,8 @@
     "express": "^5.2.1",
     "express-openapi-validator": "^5.6.0",
     "pg": "^8.16.3",
-    "swagger-ui-express": "^5.0.1"
+    "swagger-ui-express": "^5.0.1",
+    "yamljs": "^0.3.0"
   },
   "devDependencies": {
     "@types/express": "^5.0.6",
@@ -25,6 +26,8 @@
     "@types/node": "^24.10.1",
     "@types/pg": "^8.15.6",
     "@types/supertest": "^6.0.3",
+    "@types/swagger-ui-express": "^4.1.8",
+    "@types/yamljs": "^0.2.34",
     "jest": "^30.2.0",
     "supertest": "^7.1.4",
     "ts-jest": "^29.4.6",
