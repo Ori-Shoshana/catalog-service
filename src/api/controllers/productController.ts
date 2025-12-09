@@ -3,6 +3,9 @@ import * as repo from '../../dal/productRepo';
 import { ProductCreateInput, ProductUpdateInput } from '../../types/product';
 import { ProductQueryFilters } from '../../types/filters';
 
+const VALID_TYPES = ['raster', 'rasterized vector', '3d tiles', 'QMesh'];
+const VALID_PROTOCOLS = ['WMS', 'WMTS', 'XYZ', '3D Tiles'];
+
 function parseNumber(value: unknown): number | undefined {
   if (typeof value === 'string') {
     const num = Number(value);
@@ -15,10 +18,21 @@ export async function getProducts(req: Request, res: Response) {
   try {
     const q = req.query;
 
+    let safeType: any = undefined;
+    if (typeof q.type === 'string' && VALID_TYPES.includes(q.type)) {
+      safeType = q.type;
+    }
+
+    let safeProtocol: any = undefined;
+    if (typeof q.consumptionProtocol === 'string' && VALID_PROTOCOLS.includes(q.consumptionProtocol)) {
+      safeProtocol = q.consumptionProtocol;
+    }
+
     const filters: ProductQueryFilters = {
       name: q.name as string | undefined,
-      type: q.type as any,
-      consumptionProtocol: q.consumptionProtocol as any,
+      
+      type: safeType,
+      consumptionProtocol: safeProtocol,
 
       minZoom: parseNumber(q.minZoom),
       minZoomGreater: parseNumber(q.minZoomGreater),
