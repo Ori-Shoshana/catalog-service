@@ -21,14 +21,6 @@ export function handleError(res: Response, err: unknown) {
     });
   }
 
-  if (dbError.code === '23503') {
-    return res.status(400).json({
-      status: 'error',
-      message: 'Foreign key violation - referenced record does not exist',
-      detail: dbError.message
-    });
-  }
-
   if (dbError.code === 'XX000') { 
     return res.status(400).json({ 
       status: 'error',
