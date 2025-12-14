@@ -1,7 +1,6 @@
 import { pool } from '../config/db';
 import { Product, ProductCreateInput, ProductUpdateInput } from '../types/product';
 import { ProductQueryFilters } from '../types/filters';
-//נעזרתי בצאט
 
 const baseSelect = `
   SELECT

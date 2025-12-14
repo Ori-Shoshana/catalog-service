@@ -6,7 +6,7 @@ services:
     restart: always
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: password
+      POSTGRES_PASSWORD: postgres
       POSTGRES_DB: products_db
     ports:
       - "5432:5432"
@@ -20,5 +20,5 @@ services:
     depends_on:
       - db
     environment:
-      DATABASE_URL: postgres://postgres:password@db:5432/products_db
+      DATABASE_URL: postgres://postgres:postgres@db:5432/products_db
       PORT: 3000

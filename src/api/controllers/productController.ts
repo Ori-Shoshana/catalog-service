@@ -1,11 +1,10 @@
 import { Request, Response } from 'express';
 import * as repo from '../../dal/productRepo';
-import { ProductCreateInput, ProductUpdateInput } from '../../types/product';
+import { ConsumptionProtocol, ProductCreateInput, ProductType, ProductUpdateInput } from '../../types/product';
 import { ProductQueryFilters } from '../../types/filters';
+import { handleError } from '../../utils/errors';
 
-const VALID_TYPES = ['raster', 'rasterized vector', '3d tiles', 'QMesh'];
-const VALID_PROTOCOLS = ['WMS', 'WMTS', 'XYZ', '3D Tiles'];
-
+// Helper function to safely parse numbers from query params
 function parseNumber(value: unknown): number | undefined {
   if (typeof value === 'string') {
     const num = Number(value);
@@ -14,19 +13,14 @@ function parseNumber(value: unknown): number | undefined {
   return undefined;
 }
 
+// --- Controller Methods ---
+
 export async function getProducts(req: Request, res: Response) {
   try {
     const q = req.query;
 
-    let safeType: any = undefined;
-    if (typeof q.type === 'string' && VALID_TYPES.includes(q.type)) {
-      safeType = q.type;
-    }
-
-    let safeProtocol: any = undefined;
-    if (typeof q.consumptionProtocol === 'string' && VALID_PROTOCOLS.includes(q.consumptionProtocol)) {
-      safeProtocol = q.consumptionProtocol;
-    }
+    const safeType = q.type as ProductType;
+    const safeProtocol = q.consumptionProtocol as ConsumptionProtocol;
 
     const filters: ProductQueryFilters = {
       name: q.name as string | undefined,
@@ -59,39 +53,46 @@ export async function getProducts(req: Request, res: Response) {
 
     const products = await repo.queryProducts(filters);
     res.json(products);
+    
   } catch (err) {
-    console.error('getProducts error:', err);
-    res.status(500).json({ message: 'Internal server error' });
+    handleError(res, err);
   }
 }
 
 export async function getProductById(req: Request, res: Response) {
   try {
     const id = Number(req.params.id);
+    
+    // Validation: Check if ID is a valid number
     if (Number.isNaN(id)) {
-      return res.status(400).json({ message: 'Invalid id' });
+      return res.status(400).json({ message: 'Invalid id: must be a number' });
     }
 
     const product = await repo.getProductById(id);
+    
     if (!product) {
       return res.status(404).json({ message: 'Product not found' });
     }
 
     res.json(product);
   } catch (err) {
-    console.error('getProductById error:', err);
-    res.status(500).json({ message: 'Internal server error' });
+    handleError(res, err);
   }
 }
 
 export async function createProduct(req: Request, res: Response) {
   try {
     const body = req.body as ProductCreateInput;
+    
+    if (!body.name) {
+      return res.status(400).json({ message: 'Missing required field: name' });
+    }
+
     const created = await repo.createProduct(body);
     res.status(201).json(created);
+    
   } catch (err) {
-    console.error('createProduct error:', err);
-    res.status(500).json({ message: 'Internal server error' });
+    handleError(res, err);
   }
 }
 
@@ -104,14 +105,14 @@ export async function updateProduct(req: Request, res: Response) {
 
     const body = req.body as ProductUpdateInput;
     const updated = await repo.updateProduct(id, body);
+    
     if (!updated) {
       return res.status(404).json({ message: 'Product not found' });
     }
 
     res.json(updated);
   } catch (err) {
-    console.error('updateProduct error:', err);
-    res.status(500).json({ message: 'Internal server error' });
+    handleError(res, err);
   }
 }
 
@@ -123,13 +124,13 @@ export async function deleteProduct(req: Request, res: Response) {
     }
 
     const ok = await repo.deleteProduct(id);
+    
     if (!ok) {
       return res.status(404).json({ message: 'Product not found' });
     }
 
-    res.status(204).send();
+    res.status(204).send(); // 204 No Content
   } catch (err) {
-    console.error('deleteProduct error:', err);
-    res.status(500).json({ message: 'Internal server error' });
+    handleError(res, err);
   }
 }

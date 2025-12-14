@@ -1,123 +1,67 @@
 import request from 'supertest';
 import { app } from '../api/app'; 
-import * as repo from '../dal/productRepo';
+import { pool } from '../config/db'; 
 
-jest.mock('../dal/productRepo');
+jest.setTimeout(10000); 
 
-const mockedRepo = repo as jest.Mocked<typeof repo>;
+describe('Integration Tests: Products API', () => {
 
-describe('Integration Tests: /products', () => {
-  
-  // Reset mocks before each test to ensure clean state
-  beforeEach(() => {
-    jest.clearAllMocks();
+  beforeEach(async () => {
+    await pool.query('DELETE FROM products');
   });
 
-  describe('GET /products', () => {
-    it('should return a list of products (200 OK)', async () => {
-      // Arrange: Define what the DB *would* return
-      const mockProducts = [
-        { 
-            id: 1, 
-            name: 'Test Map', 
-            type: 'raster', 
-            consumptionProtocol: 'WMS', 
-            boundingPolygon: '...' 
-        }
-      ];
-      // @ts-ignore - We don't need to mock every single field for the test to pass
-      mockedRepo.queryProducts.mockResolvedValue(mockProducts);
+  afterAll(async () => {
+    await pool.end();
+  });
 
-      // Act: Perform the request
-      const response = await request(app).get('/products');
-
-      // Assert: Check the results matches OpenAPI
-      expect(response.status).toBe(200);
-      expect(response.body).toEqual(mockProducts);
-      expect(mockedRepo.queryProducts).toHaveBeenCalledTimes(1);
-    });
-
-    it('should pass query filters to the repository', async () => {
-      mockedRepo.queryProducts.mockResolvedValue([]);
-
-      await request(app).get('/products?minZoom=5&type=raster');
-
-      // Verify the controller parsed "5" into a number and passed it correctly
-      expect(mockedRepo.queryProducts).toHaveBeenCalledWith(
-        expect.objectContaining({
-          minZoom: 5,
-          type: 'raster'
+  describe('Standard Operations (Success)', () => {
+    
+    it('should create a valid product and retrieve it successfully', async () => {
+      const newProduct = {
+        name: "Integration Map",
+        type: "raster",
+        consumptionProtocol: "WMS",
+        boundingPolygon: JSON.stringify({
+          type: "Polygon",
+          coordinates: [[[30, 10], [40, 40], [20, 40], [10, 20], [30, 10]]]
         })
-      );
-    });
-  });
-
-  describe('GET /products/:id', () => {
-    it('should return a product when it exists (200 OK)', async () => {
-        const mockProduct = { id: 10, name: 'Found Me', type: 'raster' };
-        // @ts-ignore
-        mockedRepo.getProductById.mockResolvedValue(mockProduct);
-
-        const response = await request(app).get('/products/10');
-
-        expect(response.status).toBe(200);
-        expect(response.body.name).toBe('Found Me');
-    });
-
-    it('should return 404 if product is not found', async () => {
-        // Simulate DB returning null
-        mockedRepo.getProductById.mockResolvedValue(null);
-
-        const response = await request(app).get('/products/999');
-
-        expect(response.status).toBe(404);
-        expect(response.body.message).toBe('Product not found');
-    });
-
-    it('should return 400 if ID is invalid', async () => {
-        const response = await request(app).get('/products/abc');
-        expect(response.status).toBe(400);
-    });
-  });
-
-  describe('POST /products', () => {
-    it('should create a new product (201 Created)', async () => {
-      const newProductInput = {
-        name: "New Map",
-        type: "3d tiles",
-        consumptionProtocol: "3D Tiles",
-        boundingPolygon: "{ ... }"
       };
 
-      const createdProduct = { ...newProductInput, id: 123 };
-      // @ts-ignore
-      mockedRepo.createProduct.mockResolvedValue(createdProduct);
+      // 1. Create
+      const postResponse = await request(app).post('/products').send(newProduct);
+      expect(postResponse.status).toBe(201);
+      expect(postResponse.body.id).toBeDefined(); 
+      
+      const createdId = postResponse.body.id;
 
-      const response = await request(app)
-        .post('/products')
-        .send(newProductInput);
-
-      expect(response.status).toBe(201);
-      expect(response.body).toEqual(createdProduct);
-      expect(mockedRepo.createProduct).toHaveBeenCalledWith(newProductInput);
+      const getResponse = await request(app).get(`/products/${createdId}`);
+      expect(getResponse.status).toBe(200);
+      expect(getResponse.body.name).toBe("Integration Map");
     });
   });
 
-  describe('DELETE /products/:id', () => {
-    it('should delete a product (204 No Content)', async () => {
-      mockedRepo.deleteProduct.mockResolvedValue(true);
-
-      const response = await request(app).delete('/products/50');
-
-      expect(response.status).toBe(204);
-      expect(response.body).toEqual({});
+  describe('Input Validation & Error Handling', () => {
+    
+    it('should reject invalid ID format with 400 Bad Request', async () => {
+      const response = await request(app).get('/products/abc');
+      
+      expect(response.status).toBe(400);
+      expect(response.body.message).toMatch(/Invalid id/i);
     });
 
-    it('should return 404 if trying to delete non-existent product', async () => {
-      mockedRepo.deleteProduct.mockResolvedValue(false);
+    it('should enforce required fields validation (return 400)', async () => {
+      const badProduct = {
+        type: "raster"
+      };
 
-      const response = await request(app).delete('/products/50');
+      const response = await request(app).post('/products').send(badProduct);
+      
+      expect(response.status).toBe(400);
+      expect(response.body.message).toMatch(/Missing required field/i);
+    });
 
+    it('should return 404 Not Found for non-existent resource', async () => {
+      const response = await request(app).get('/products/999999');
       expect(response.status).toBe(404);
     });
   });

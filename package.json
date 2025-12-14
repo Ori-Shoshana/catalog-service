@@ -6,7 +6,7 @@
     "dev": "ts-node-dev src/api/server.ts",
     "build": "tsc",
     "start": "node dist/api/server.js",
-    "test": "jest"
+    "test": "DATABASE_URL=postgres://postgres:postgres@localhost:5432/products_db jest"
   },
   "keywords": [],
   "author": "",
