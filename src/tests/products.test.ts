@@ -1,5 +1,5 @@
 import request from "supertest";
-import { app } from "../api/app";
+import { app } from "../../api/app";
 import { pool } from "../config/db";
 
 jest.setTimeout(10000);

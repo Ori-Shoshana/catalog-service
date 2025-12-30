@@ -11,103 +11,32 @@ paths:
     get:
       summary: List products
       parameters:
-        # equal (strings / enums / numbers)
-        - in: query
-          name: name
-          schema:
-            type: string
-        - in: query
-          name: type
-          schema:
-            $ref: '#/components/schemas/ProductType'
-        - in: query
-          name: consumptionProtocol
-          schema:
-            $ref: '#/components/schemas/ConsumptionProtocol'
-        - in: query
-          name: minZoom
-          schema:
-            type: integer
-        - in: query
-          name: maxZoom
-          schema:
-            type: integer
-        - in: query
-          name: resolutionBest
-          schema:
-            type: number
-            format: double
+        - $ref: '#/components/parameters/Name'
+        - $ref: '#/components/parameters/ProductType'
+        - $ref: '#/components/parameters/ConsumptionProtocol'
 
-        # greater / greaterEqual / less / lessEqual (numbers)
-        - in: query
-          name: minZoomGreater
-          schema:
-            type: integer
-        - in: query
-          name: minZoomGreaterEqual
-          schema:
-            type: integer
-        - in: query
-          name: minZoomLess
-          schema:
-            type: integer
-        - in: query
-          name: minZoomLessEqual
-          schema:
-            type: integer
+        - $ref: '#/components/parameters/MinZoom'
+        - $ref: '#/components/parameters/MaxZoom'
+        - $ref: '#/components/parameters/ResolutionBest'
 
-        - in: query
-          name: maxZoomGreater
-          schema:
-            type: integer
-        - in: query
-          name: maxZoomGreaterEqual
-          schema:
-            type: integer
-        - in: query
-          name: maxZoomLess
-          schema:
-            type: integer
-        - in: query
-          name: maxZoomLessEqual
-          schema:
-            type: integer
+        - $ref: '#/components/parameters/MinZoomGreater'
+        - $ref: '#/components/parameters/MinZoomGreaterEqual'
+        - $ref: '#/components/parameters/MinZoomLess'
+        - $ref: '#/components/parameters/MinZoomLessEqual'
 
-        - in: query
-          name: resolutionBestGreater
-          schema:
-            type: number
-            format: double
-        - in: query
-          name: resolutionBestGreaterEqual
-          schema:
-            type: number
-            format: double
-        - in: query
-          name: resolutionBestLess
-          schema:
-            type: number
-            format: double
-        - in: query
-          name: resolutionBestLessEqual
-          schema:
-            type: number
-            format: double
+        - $ref: '#/components/parameters/MaxZoomGreater'
+        - $ref: '#/components/parameters/MaxZoomGreaterEqual'
+        - $ref: '#/components/parameters/MaxZoomLess'
+        - $ref: '#/components/parameters/MaxZoomLessEqual'
 
-        # geo filters: contains / within / intersects (פשוט כ־string)
-        - in: query
-          name: boundingPolygonContains
-          schema:
-            type: string
-        - in: query
-          name: boundingPolygonWithin
-          schema:
-            type: string
-        - in: query
-          name: boundingPolygonIntersects
-          schema:
-            type: string
+        - $ref: '#/components/parameters/ResolutionBestGreater'
+        - $ref: '#/components/parameters/ResolutionBestGreaterEqual'
+        - $ref: '#/components/parameters/ResolutionBestLess'
+        - $ref: '#/components/parameters/ResolutionBestLessEqual'
 
+        - $ref: '#/components/parameters/BoundingPolygonContains'
+        - $ref: '#/components/parameters/BoundingPolygonWithin'
+        - $ref: '#/components/parameters/BoundingPolygonIntersects'
       responses:
         '200':
           description: List of products
@@ -117,6 +46,10 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Product'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
 
     post:
       summary: Create product
@@ -133,17 +66,17 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Product'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
 
   /products/{id}:
+    parameters:
+      - $ref: '#/components/parameters/ProductId'
+
     get:
       summary: Get product by id
-      parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: integer
-            format: int64
       responses:
         '200':
           description: Product
@@ -151,18 +84,15 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Product'
-        '404':
-          description: Not found
+        '404': { $ref: '#/components/responses/NotFound' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
 
     put:
-      summary: Update product by id
-      parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: integer
-            format: int64
+      summary: Replace product by id (full replace)
+      description: PUT replaces the entire resource representation.
       requestBody:
         required: true
         content:
@@ -176,25 +106,192 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Product'
-        '404':
-          description: Not found
+        '404': { $ref: '#/components/responses/NotFound' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
+
+    patch:
+      summary: Update product by id (partial update)
+      description: PATCH updates only the provided fields.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductPatch'
+      responses:
+        '200':
+          description: Product updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+        '404': { $ref: '#/components/responses/NotFound' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
 
     delete:
       summary: Delete product by id
-      parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: integer
-            format: int64
       responses:
         '204':
           description: Product deleted
-        '404':
-          description: Not found
+        '404': { $ref: '#/components/responses/NotFound' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
 
 components:
+  parameters:
+    ProductId:
+      name: id
+      in: path
+      required: true
+      description: Product identifier (UUID recommended, numeric string allowed)
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 64
+
+    Name:
+      name: name
+      in: query
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 48
+
+    ProductType:
+      name: type
+      in: query
+      schema:
+        $ref: '#/components/schemas/ProductType'
+
+    ConsumptionProtocol:
+      name: consumptionProtocol
+      in: query
+      schema:
+        $ref: '#/components/schemas/ConsumptionProtocol'
+
+    MinZoom:
+      name: minZoom
+      in: query
+      schema:
+        $ref: '#/components/schemas/ZoomLevel'
+    MaxZoom:
+      name: maxZoom
+      in: query
+      schema:
+        $ref: '#/components/schemas/ZoomLevel'
+
+    ResolutionBest:
+      name: resolutionBest
+      in: query
+      schema:
+        $ref: '#/components/schemas/Resolution'
+
+    MinZoomGreater:
+      name: minZoomGreater
+      in: query
+      schema: { $ref: '#/components/schemas/ZoomLevel' }
+    MinZoomGreaterEqual:
+      name: minZoomGreaterEqual
+      in: query
+      schema: { $ref: '#/components/schemas/ZoomLevel' }
+    MinZoomLess:
+      name: minZoomLess
+      in: query
+      schema: { $ref: '#/components/schemas/ZoomLevel' }
+    MinZoomLessEqual:
+      name: minZoomLessEqual
+      in: query
+      schema: { $ref: '#/components/schemas/ZoomLevel' }
+
+    MaxZoomGreater:
+      name: maxZoomGreater
+      in: query
+      schema: { $ref: '#/components/schemas/ZoomLevel' }
+    MaxZoomGreaterEqual:
+      name: maxZoomGreaterEqual
+      in: query
+      schema: { $ref: '#/components/schemas/ZoomLevel' }
+    MaxZoomLess:
+      name: maxZoomLess
+      in: query
+      schema: { $ref: '#/components/schemas/ZoomLevel' }
+    MaxZoomLessEqual:
+      name: maxZoomLessEqual
+      in: query
+      schema: { $ref: '#/components/schemas/ZoomLevel' }
+
+    ResolutionBestGreater:
+      name: resolutionBestGreater
+      in: query
+      schema: { $ref: '#/components/schemas/Resolution' }
+    ResolutionBestGreaterEqual:
+      name: resolutionBestGreaterEqual
+      in: query
+      schema: { $ref: '#/components/schemas/Resolution' }
+    ResolutionBestLess:
+      name: resolutionBestLess
+      in: query
+      schema: { $ref: '#/components/schemas/Resolution' }
+    ResolutionBestLessEqual:
+      name: resolutionBestLessEqual
+      in: query
+      schema: { $ref: '#/components/schemas/Resolution' }
+
+    BoundingPolygonContains:
+      name: boundingPolygonContains
+      in: query
+      description: Geometry filter as string (GeoJSON/WKT)
+      schema: { $ref: '#/components/schemas/GeometryString' }
+    BoundingPolygonWithin:
+      name: boundingPolygonWithin
+      in: query
+      description: Geometry filter as string (GeoJSON/WKT)
+      schema: { $ref: '#/components/schemas/GeometryString' }
+    BoundingPolygonIntersects:
+      name: boundingPolygonIntersects
+      in: query
+      description: Geometry filter as string (GeoJSON/WKT)
+      schema: { $ref: '#/components/schemas/GeometryString' }
+
+  responses:
+    BadRequest:
+      description: Bad Request (validation error)
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorResponse' }
+
+    Unauthorized:
+      description: Unauthorized (missing/invalid credentials)
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorResponse' }
+
+    Forbidden:
+      description: Forbidden (authenticated but not allowed)
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorResponse' }
+
+    NotFound:
+      description: Not Found
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorResponse' }
+
+    InternalServerError:
+      description: Internal Server Error
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorResponse' }
+
   schemas:
     ProductType:
       type: string
@@ -212,8 +309,42 @@ components:
         - XYZ
         - 3D Tiles
 
+    ZoomLevel:
+      type: integer
+      minimum: 0
+      maximum: 24
+
+    Resolution:
+      type: number
+      format: double
+      minimum: 0
+
+    GeometryString:
+      type: string
+      minLength: 1
+      maxLength: 20000
+
+    ErrorResponse:
+      type: object
+      additionalProperties: false
+      required: [message]
+      properties:
+        message:
+          type: string
+          minLength: 1
+          maxLength: 200
+        code:
+          type: string
+          maxLength: 64
+        details:
+          type: array
+          items:
+            type: string
+            maxLength: 200
+
     ProductInput:
       type: object
+      additionalProperties: false
       required:
         - name
         - boundingPolygon
@@ -222,30 +353,62 @@ components:
       properties:
         name:
           type: string
+          minLength: 1
           maxLength: 48
         description:
           type: string
+          maxLength: 2000
         boundingPolygon:
-          type: string      # למשל GeoJSON או WKT, לא משנה לספק
+          $ref: '#/components/schemas/GeometryString'
         consumptionLink:
           type: string
+          maxLength: 2048
         type:
           $ref: '#/components/schemas/ProductType'
         consumptionProtocol:
           $ref: '#/components/schemas/ConsumptionProtocol'
         resolutionBest:
-          type: number
-          format: double
+          $ref: '#/components/schemas/Resolution'
         minZoom:
-          type: integer
+          $ref: '#/components/schemas/ZoomLevel'
         maxZoom:
-          type: integer
+          $ref: '#/components/schemas/ZoomLevel'
+
+    ProductPatch:
+      type: object
+      additionalProperties: false
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 48
+        description:
+          type: string
+          maxLength: 2000
+        boundingPolygon:
+          $ref: '#/components/schemas/GeometryString'
+        consumptionLink:
+          type: string
+          maxLength: 2048
+        type:
+          $ref: '#/components/schemas/ProductType'
+        consumptionProtocol:
+          $ref: '#/components/schemas/ConsumptionProtocol'
+        resolutionBest:
+          $ref: '#/components/schemas/Resolution'
+        minZoom:
+          $ref: '#/components/schemas/ZoomLevel'
+        maxZoom:
+          $ref: '#/components/schemas/ZoomLevel'
 
     Product:
       allOf:
         - $ref: '#/components/schemas/ProductInput'
         - type: object
+          additionalProperties: false
+          required: [id]
           properties:
             id:
-              type: integer
-              format: int64
+              type: string
+              minLength: 1
+              maxLength: 64

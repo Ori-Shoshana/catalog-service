@@ -1,6 +1,8 @@
-export type ProductType = 'raster' | 'rasterized vector' | '3d tiles' | 'QMesh';
+export const PRODUCT_TYPES = ['raster', 'rasterized vector', '3d tiles', 'QMesh'] as const;
+export type ProductType = (typeof PRODUCT_TYPES)[number];
 
-export type ConsumptionProtocol = 'WMS' | 'WMTS' | 'XYZ' | '3D Tiles';
+export const CONSUMPTION_PROTOCOLS = ['WMS', 'WMTS', 'XYZ', '3D Tiles'] as const;
+export type ConsumptionProtocol = (typeof CONSUMPTION_PROTOCOLS)[number];
 
 export interface Product {
   id: number;
@@ -15,6 +17,5 @@ export interface Product {
   maxZoom?: number;
 }
 
-// what the client sends on POST/PUT (no id) - נעזרתי בצאט
 export type ProductCreateInput = Omit<Product, 'id'>;
-export type ProductUpdateInput = ProductCreateInput;
+export type ProductUpdateInput = Partial<ProductCreateInput>;

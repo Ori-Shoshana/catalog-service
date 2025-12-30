@@ -1,4 +1,4 @@
-import { ProductType, ConsumptionProtocol } from './product';
+import type { ProductType, ConsumptionProtocol } from './product';
 
 export interface ProductQueryFilters {
 
